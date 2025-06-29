@@ -7,6 +7,27 @@ const url = require('url');     // Required for parsing URLs
 const cors = require('cors');
 
 const app = express();
+    // ... (Your existing 'require' statements and other code above this point) ...
+    // Make sure 'const cors = require('cors');' is present near the top.
+
+    const app = express();
+
+    // CORS configuration to allow requests from your Firebase-hosted frontend
+    // Replace 'https://your-firebase-hosting-url.web.app' with your ACTUAL Firebase Hosting URL
+    const corsOptions = {
+        origin: 'https://skatepark-audit-form.web.app', // <--- THIS IS YOUR FIREBASE HOSTING URL
+        methods: ['GET', 'POST', 'OPTIONS'], // Allow these HTTP methods
+        allowedHeaders: ['Content-Type'], // Allow the Content-Type header
+        credentials: true, // Allow sending cookies/auth headers (if applicable, though not used now)
+    };
+    app.use(cors(corsOptions)); // Apply the CORS middleware to Express app
+
+    // Your existing body-parser middleware should be here, just after CORS
+    app.use(bodyParser.json({ limit: '50mb' }));
+    app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+
+    // ... (The rest of your server.cjs file, including app.all('/api', ...) and app.listen(...)) ...
+    
 
 // --- DEBUG: Raw Request Logger ---
 // This middleware logs every incoming request to Express immediately.
