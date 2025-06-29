@@ -1,0 +1,9 @@
+// Define Firebase config for local development (not used when running in Canvas)
+const localFirebaseConfig = {
+  apiKey: "AIzaSyDDhrS0idwxLe-hIH7ajHwTI-AFS7TktrI", // Replace with your Firebase API key
+  authDomain: "rich-landscapes-sp-audit.firebaseapp.com",
+  projectId: "rich-landscapes-sp-audit",
+  storageBucket: "rich-landscapes-sp-audit.firebasestorage.app",
+  messagingSenderId: "1051295747955",
+  appId: "1:1051295747955:web:fb83906b64d85d9200ff06"
+};

@@ -1,0 +1,596 @@
+/**
+ * Global constants for configuration.
+ * IMPORTANT: These are your actual Google Drive and Sheet IDs.
+ */
+const BASE_FOLDER_ID = '1yKXUEAJxl8ONmgyYwV_gw7rwb2Q5h4Xs'; // Parent folder for all submitted audits
+const DRAFT_FOLDER_ID = '1UUNwXaQ6N49Bag0538ksRhKUuhFtLxG2'; // Folder where draft sheets are stored
+const RAW_DATA_SHEET_TEMPLATE_ID = '1Vhhs15D77FrZC4kgSMOavXUaNn5iu8iRwpzsY7W083g'; // Template for the raw data sheet for submissions
+
+const EMAIL_RECIPIENTS = 'jessica@richlandscapes.co.nz,rich@richlandscapes.co.nz'; // Comma-separated email recipients for draft links
+
+// IMPORTANT: Replace with the deployed URL of your React form (e.g., 'http://localhost:5173/' or 'https://yourdomain.com/form')
+const FRONTEND_FORM_BASE_URL = 'http://localhost:5173/';
+
+/**
+ * Defines the structure and properties of all form fields.
+ * This is crucial for correctly mapping form data to Google Sheet columns
+ * and for reconstructing data when loading drafts.
+ * 'group': (Optional) The group heading for the field in the sheet.
+ * 'label': The human-readable label for the field (used in Column A of the sheet).
+ * 'fieldName': The 'name' attribute from your React form input (used as key in formData object).
+ * 'inputType': Helps determine how to process the value (e.g., 'checkbox' values need joining).
+ * 'isPhotoField': Boolean, true if this field is an image upload field.
+ */
+const FORM_FIELDS_SPEC = [
+  { group: "GENERAL INFORMATION", label: "Skatepark Name", fieldName: "skateparkName", inputType: "text", required: true },
+  { group: "", label: "Date of Audit", fieldName: "dateOfAudit", inputType: "date", isPhotoField: false },
+  { group: "", label: "Location", fieldName: "location", inputType: "textarea", isPhotoField: false },
+  { group: "", label: "Age of Skatepark", fieldName: "ageOfSkatepark", inputType: "text", isPhotoField: false },
+  { group: "", label: "Auditor Name", fieldName: "auditorName", inputType: "text", isPhotoField: false },
+  { group: "", label: "Classification", fieldName: "classification", inputType: "select", isPhotoField: false },
+  { group: "", label: "General Photos", fieldName: "generalPhotos", inputType: "file", isPhotoField: true },
+
+  { group: "SITE INFORMATION", label: "Type of Skatepark", fieldName: "typeOfSkatepark", inputType: "checkbox", isPhotoField: false },
+  { group: "", label: "Style of Riding", fieldName: "styleOfRiding", inputType: "checkbox", isPhotoField: false },
+  { group: "", label: "Typical Type of Users", fieldName: "typicalTypeOfUsers", inputType: "checkbox", isPhotoField: false },
+  { group: "", label: "Skill Level", fieldName: "skillLevel", inputType: "select", isPhotoField: false },
+  { group: "", label: "Capacity", fieldName: "capacity", inputType: "select", isPhotoField: false },
+  { group: "", label: "Signage – Existing", fieldName: "signageExisting", inputType: "radio", isPhotoField: false },
+  { group: "", label: "Signage – Existing Notes", fieldName: "signageExistingNotes", inputType: "text", isPhotoField: false },
+  { group: "", label: "Signage – Existing Photos", fieldName: "signageExistingPhotos", inputType: "file", isPhotoField: true },
+  { group: "", label: "Signage – New", fieldName: "signageNew", inputType: "select", isPhotoField: false },
+  { group: "", label: "Signage – New Notes", fieldName: "signageNewNotes", inputType: "text", isPhotoField: false },
+  { group: "", label: "Signage – New Photos", fieldName: "signageNewPhotos", inputType: "file", isPhotoField: true },
+  { group: "", label: "Site Specific Safety Issues", fieldName: "siteSpecificSafetyIssues", inputType: "radio", isPhotoField: false },
+  { group: "", label: "Site-Specific Safety Issues Notes", fieldName: "siteSpecificSafetyIssuesNotes", inputType: "text", isPhotoField: false },
+  { group: "", label: "Site-Specific Safety Issues Photos", fieldName: "siteSpecificSafetyIssuesPhotos", inputType: "file", isPhotoField: true },
+  { group: "", label: "CPTED issues", fieldName: "cptedIssues", inputType: "radio", isPhotoField: false },
+  { group: "", label: "CPTED issues Notes", fieldName: "cptedIssuesNotes", inputType: "text", isPhotoField: false },
+  { group: "", label: "CPTED issues Photos", fieldName: "cptedIssuesPhotos", inputType: "file", isPhotoField: true },
+  { group: "", label: "Accessibility – Users", fieldName: "accessibilityUsers", inputType: "radio", isPhotoField: false },
+  { group: "", label: "Accessibility – Users Notes", fieldName: "accessibilityUsersNotes", inputType: "text", isPhotoField: false },
+  { group: "", label: "Accessibility – Users Photos", fieldName: "accessibilityUsersPhotos", inputType: "file", isPhotoField: true },
+  { group: "", label: "Accessibility – Caregivers", fieldName: "accessibilityCaregivers", inputType: "radio", isPhotoField: false },
+  { group: "", label: "Accessibility – Caregivers Notes", fieldName: "accessibilityCaregiversNotes", inputType: "text", isPhotoField: false },
+  { group: "", label: "Accessibility – Caregivers Photos", fieldName: "accessibilityCaregiversPhotos", inputType: "file", isPhotoField: true },
+
+  { group: "ASSESSMENT OF SKATEPARK", label: "Overall Assessment", fieldName: "overallAssessment", inputType: "textarea", isPhotoField: false },
+  { group: "", label: "Estimated Proportionof Life Consumed", fieldName: "estimatedLifeConsumed", inputType: "select", isPhotoField: false },
+  { group: "", label: "Overall Structure", fieldName: "overallStructure", inputType: "select", isPhotoField: false },
+  { group: "", label: "Structure Observations", fieldName: "structureObservations", inputType: "checkbox", isPhotoField: false },
+
+  // INDIVIDUAL FEATURES (Dynamic Section - handled separately)
+  { group: "FUNCTION AND DESIGN", label: "Overall Function", fieldName: "overallFunction", inputType: "select", isPhotoField: false },
+  { group: "", label: "Function Notes", fieldName: "functionNotes", inputType: "textarea", isPhotoField: false },
+  { group: "", label: "Function Photos", fieldName: "functionPhotos", inputType: "file", isPhotoField: true },
+  { group: "", label: "Design - Layout of Elements", fieldName: "designLayoutElements", inputType: "select", isPhotoField: false },
+  { group: "", label: "Design - Layout of Elements Notes", fieldName: "designLayoutElementsNotes", inputType: "textarea", isPhotoField: false },
+  { group: "", label: "Design - Layout of Elements Photos", fieldName: "designLayoutElementsPhotos", inputType: "file", isPhotoField: true },
+  { group: "", label: "Conflict of Users", fieldName: "conflictOfUsers", inputType: "radio", isPhotoField: false },
+  { group: "", label: "Conflict Notes", fieldName: "conflictNotes", inputType: "textarea", isPhotoField: false },
+  { group: "", label: "Conflict Photos", fieldName: "conflictPhotos", inputType: "file", isPhotoField: true },
+  { group: "", label: "Aesthetic", fieldName: "aesthetic", inputType: "select", isPhotoField: false },
+  { group: "", label: "Aesthetic Notes", fieldName: "aestheticNotes", inputType: "textarea", isPhotoField: false },
+  { group: "", label: "Aesthetic Photos", fieldName: "aestheticPhotos", inputType: "file", isPhotoField: true },
+  { group: "", label: "Regionally Significant Asset", fieldName: "regionallySignificantAsset", inputType: "radio", isPhotoField: false },
+  { group: "", label: "Regionally Significant Asset Notes", fieldName: "regionallySignificantAssetNotes", inputType: "text", isPhotoField: false },
+  { group: "", label: "Regionally Significant Asset Photos", fieldName: "regionallySignificantAssetPhotos", inputType: "file", isPhotoField: true },
+
+  { group: "AMENITIES", type: "heading" },
+  { label: "Toilets", fieldName: "toilets", inputType: "radio", isPhotoField: false },
+  { label: "Toilets Notes", fieldName: "toiletsNotes", inputType: "text", isPhotoField: false },
+  { label: "Toilets Photos", fieldName: "toiletsPhotos", inputType: "file", isPhotoField: true },
+  { label: "Playgrounds", fieldName: "playgrounds", inputType: "radio", isPhotoField: false },
+  { label: "Playgrounds Notes", fieldName: "playgroundsNotes", inputType: "text", isPhotoField: false },
+  { label: "Playgrounds Photos", fieldName: "playgroundsPhotos", inputType: "file", isPhotoField: true },
+  { label: "Seating", fieldName: "seating", inputType: "radio", isPhotoField: false },
+  { label: "Seating Notes", fieldName: "seatingNotes", inputType: "text", isPhotoField: false },
+  { label: "Seating Photos", fieldName: "seatingPhotos", inputType: "file", isPhotoField: true },
+  { label: "Shade", fieldName: "shade", inputType: "radio", isPhotoField: false },
+  { label: "Shade Notes", fieldName: "shadeNotes", inputType: "text", isPhotoField: false },
+  { label: "Shade Photos", fieldName: "shadePhotos", inputType: "file", isPhotoField: true },
+  { label: "Drinking Fountain", fieldName: "drinkingFountain", inputType: "radio", isPhotoField: false },
+  { label: "Drinking Fountain Notes", fieldName: "drinkingFountainNotes", inputType: "text", isPhotoField: false },
+  { label: "Drinking Fountain Photos", fieldName: "drinkingFountainPhotos", inputType: "file", isPhotoField: true },
+  { label: "Planting", fieldName: "planting", inputType: "radio", isPhotoField: false },
+  { label: "Planting Notes", fieldName: "plantingNotes", inputType: "text", isPhotoField: false },
+  { label: "Planting Photos", fieldName: "plantingPhotos", inputType: "file", isPhotoField: true },
+  { label: "Lighting", fieldName: "lighting", inputType: "select", isPhotoField: false },
+  { label: "Lighting Notes", fieldName: "lightingNotes", inputType: "text", isPhotoField: false },
+  { label: "Lighting Photos", fieldName: "lightingPhotos", inputType: "file", isPhotoField: true },
+  { label: "Lighting New Bulbs Required?", fieldName: "lightingNewBulbsRequired", inputType: "radio", isPhotoField: false },
+  { label: "Carparking", fieldName: "carparking", inputType: "select", isPhotoField: false },
+  { label: "Carparking Notes", fieldName: "carparkingNotes", inputType: "text", isPhotoField: false },
+  { label: "Carparking Photos", fieldName: "carparkingPhotos", inputType: "file", isPhotoField: true },
+  { label: "Pathways", fieldName: "pathways", inputType: "select", isPhotoField: false },
+  { label: "Pathways Notes", fieldName: "pathwaysNotes", inputType: "text", isPhotoField: false },
+  { label: "Pathways Photos", fieldName: "pathwaysPhotos", inputType: "file", isPhotoField: true },
+  { label: "Drainage Assessment", fieldName: "drainageAssessment", inputType: "select", isPhotoField: false },
+  { label: "Drainage Assesment Notes", fieldName: "drainageAssessmentNotes", inputType: "text", isPhotoField: false },
+  { label: "Drainage Assessment Photos", fieldName: "drainageAssessmentPhotos", inputType: "file", isPhotoField: true },
+  { label: "Water Pooling", fieldName: "waterPooling", inputType: "radio", isPhotoField: false },
+  { label: "Water Pooling Notes", fieldName: "waterPoolingNotes", inputType: "text", isPhotoField: false },
+  { label: "Water Pooling Photos", fieldName: "waterPoolingPhotos", inputType: "file", isPhotoField: true },
+  { label: "Blocked Drains", fieldName: "blockedDrains", inputType: "radio", isPhotoField: false },
+  { label: "Blocked Drains Notes", fieldName: "blockedDrainsNotes", inputType: "text", isPhotoField: false },
+  { label: "Blocked Drains Photos", fieldName: "blockedDrainsPhotos", inputType: "file", isPhotoField: true },
+  { group: "", label: "Overland Flow", fieldName: "overlandFlow", inputType: "radio", isPhotoField: false },
+  { group: "", label: "Overland Flow Notes", fieldName: "overlandFlowNotes", inputType: "text", isPhotoField: false },
+  { group: "", label: "Overland Flow Photos", fieldName: "overlandFlowPhotos", inputType: "file", isPhotoField: true },
+
+  { group: "MAINTENANCE", type: "heading" },
+  { group: "", label: "Overall Maintenance", fieldName: "overallMaintenance", inputType: "select", isPhotoField: false },
+  { group: "", label: "General Maintenance", fieldName: "generalMaintenance", inputType: "checkbox", isPhotoField: false },
+  { group: "", label: "General Maintenance Notes", fieldName: "generalMaintenanceNotes", inputType: "text", isPhotoField: false },
+  { group: "", label: "General Maintenance Photos", fieldName: "generalMaintenancePhotos", inputType: "file", isPhotoField: true },
+
+  { group: "ADDITIONAL COMMENTS", type: "heading" },
+  { group: "", label: "Additional Comments", fieldName: "additionalComments", inputType: "textarea", isPhotoField: false },
+  { group: "", label: "Additional Comments Photos", fieldName: "additionalCommentsPhotos", inputType: "file", isPhotoField: true },
+];
+
+/**
+ * PHASE 1 DRAFT FIELDS: Only these fields will be saved as a draft for now.
+ * This explicitly excludes file uploads, checkboxes, and radio buttons.
+ */
+const PHASE1_DRAFT_FIELDS = [
+  "skateparkName",
+  "dateOfAudit",
+  "location",
+  "ageOfSkatepark",
+  "auditorName",
+  "overallAssessment",
+  "overallMaintenance",
+  "additionalComments"
+];
+
+
+/**
+ * Helper function to create a text output with JSON MIME type.
+ * Note: Access-Control-Allow-Origin header is expected to be handled implicitly by
+ * Google Apps Script when deployed with "Who has access: Anyone".
+ * @param {Object} data The data to be stringified to JSON.
+ * @returns {GoogleAppsScript.Content.TextOutput} The configured text output.
+ */
+function createJsonResponse(data) {
+  const response = ContentService.createTextOutput(JSON.stringify(data));
+  response.setMimeType(ContentService.MimeType.JSON);
+  return response;
+}
+
+/**
+ * Handles preflight OPTIONS requests for CORS.
+ * This simplified version relies on Google Apps Script's deployment settings
+ * to implicitly handle CORS headers for 'Anyone' access.
+ * @param {GoogleAppsScript.Events.DoPost} e The event object.
+ * @returns {GoogleAppsScript.Content.TextOutput} An empty response.
+ */
+function doOptions(e) {
+  return ContentService.createTextOutput('');
+}
+
+/**
+ * Handles GET requests to the web app.
+ * Used for loading pre-filled draft data via a resume link.
+ * @param {GoogleAppsScript.Events.DoGet} e The event object for the GET request.
+ * @returns {GoogleAppsScript.Content.TextOutput} A JSON response containing draft data or an error.
+ */
+function doGet(e) {
+  Logger.log("doGet: Received request. Parameters: " + JSON.stringify(e.parameter));
+  try {
+    const draftFileName = e.parameter.resumeDraftFileName;
+    if (!draftFileName) {
+      Logger.log("doGet: No resumeDraftFileName provided.");
+      return createJsonResponse({ success: false, message: "No draft file name provided." });
+    }
+
+    const draftFolder = DriveApp.getFolderById(DRAFT_FOLDER_ID);
+    const files = draftFolder.getFilesByName(draftFileName);
+    let file;
+
+    if (files.hasNext()) {
+      file = files.next();
+      Logger.log(`doGet: Found draft file: ${file.getName()} (ID: ${file.getId()})`);
+    } else {
+      Logger.log(`doGet: Draft file with name ${draftFileName} not found.`);
+      return createJsonResponse({ success: false, message: "Draft file not found in folder." });
+    }
+
+    const spreadsheet = SpreadsheetApp.openById(file.getId());
+    const sheet = spreadsheet.getSheets()[0];
+
+    const range = sheet.getDataRange();
+    const values = range.getValues();
+
+    if (values.length < 2) {
+      Logger.log("doGet: Draft sheet is empty or malformed (less than 2 rows).");
+      return createJsonResponse({ success: false, message: "Draft sheet is empty or malformed." });
+    }
+
+    const headers = values[0];
+    const dataRow = values[1];
+
+    // Log the raw headers and dataRow from the sheet for debugging
+    Logger.log("doGet Debug: Raw Headers from Sheet: " + JSON.stringify(headers));
+    Logger.log("doGet Debug: Raw Data Row from Sheet: " + JSON.stringify(dataRow));
+
+
+    const loadedFormData = {};
+    // Create a map for quick lookup of column index by fieldName from headers
+    const headerMap = new Map();
+    headers.forEach((header, index) => {
+        headerMap.set(header.trim(), index); // Trim header names for robust matching
+    });
+
+    // Iterate through FORM_FIELDS_SPEC to ensure we process all expected fields
+    FORM_FIELDS_SPEC.forEach(fieldSpec => {
+        const key = fieldSpec.fieldName;
+        const colIndex = headerMap.get(key);
+        let value = (colIndex !== undefined && colIndex < dataRow.length) ? dataRow[colIndex] : ''; // Get value using mapped index
+
+        // Force value to a string for consistent parsing and ensure true empty values are empty strings
+        if (value === null || value === undefined) {
+            value = '';
+        } else if (typeof value === 'boolean') { // Convert booleans (from getValues) to "Yes"/"No" strings for radio buttons
+            value = value ? "Yes" : "No";
+        } else if (value instanceof Date) { // Convert Date objects (from getValues) to `yyyy-MM-dd` string
+            value = Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+        } else if (typeof value !== 'string') {
+            value = String(value); // Convert numbers, etc., to string
+        }
+
+        // Apply specific parsing based on field type (only for fields in PHASE1_DRAFT_FIELDS to be loaded)
+        // For Phase 1, other complex fields will simply default to their initial state.
+        if (PHASE1_DRAFT_FIELDS.includes(key)) {
+            if (fieldSpec.isPhotoField) { // Though photos are not in PHASE1_DRAFT_FIELDS, this parsing is generally correct
+                try {
+                    loadedFormData[key] = (value.length > 0 && value.startsWith('[') && value.endsWith(']')) ? JSON.parse(value).map(name => ({ originalName: name, type: 'image/jpeg' })) : [];
+                } catch (e) {
+                    loadedFormData[key] = [];
+                }
+            } else if (fieldSpec.inputType === 'checkbox') { // Checkboxes not in PHASE1_DRAFT_FIELDS
+                loadedFormData[key] = (value.length > 0) ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+            } else if (fieldSpec.inputType === 'date') {
+                // Value is already processed to `yyyy-MM-dd` above if it was a Date object.
+                // If it was a string, ensure it's in the correct format for HTML date input.
+                if (value.length > 0 && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+                    try {
+                        const parsedDate = new Date(value);
+                        if (!isNaN(parsedDate.getTime())) {
+                            value = Utilities.formatDate(parsedDate, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+                        } else {
+                            value = ''; // Invalid date string, set to empty
+                        }
+                    } catch (e) {
+                        value = ''; // Error during parse, set to empty
+                    }
+                }
+                loadedFormData[key] = value;
+            } else if (typeof value === 'string' && value.startsWith('{') && value.endsWith('}')) {
+                try {
+                    loadedFormData[key] = JSON.parse(value);
+                } catch (e) {
+                    loadedFormData[key] = value;
+                }
+            } else {
+                loadedFormData[key] = value; // Direct assignment for text, textarea, select, radio (if in PHASE1_DRAFT_FIELDS)
+            }
+        } else {
+            // For fields NOT in PHASE1_DRAFT_FIELDS, initialize them to their default empty states
+            if (fieldSpec.inputType === 'checkbox' || fieldSpec.inputType === 'file') {
+                loadedFormData[key] = [];
+            } else if (fieldSpec.inputType === 'radio' || fieldSpec.inputType === 'select') {
+                // For radio/select, assign the first option (typically empty string) or just an empty string
+                loadedFormData[key] = (fieldSpec.options && fieldSpec.options.length > 0) ? fieldSpec.options[0] : '';
+            } else {
+                loadedFormData[key] = '';
+            }
+        }
+        Logger.log(`doGet Debug: Field ${key}. Final loaded value: "${JSON.stringify(loadedFormData[key])}" (Original Sheet Value: "${value}")`);
+    });
+
+    // Individual features will not be loaded for Phase 1 as they are complex
+    loadedFormData.individualFeatures = [];
+    Logger.log("doGet Debug: Individual Features reset for Phase 1 loading.");
+
+    Logger.log("doGet Debug: Final loadedFormData before sending to frontend: " + JSON.stringify(loadedFormData));
+    return createJsonResponse({ success: true, formData: loadedFormData });
+
+  } catch (error) {
+    Logger.log("doGet Error: " + error.toString() + "\n" + error.stack);
+    return createJsonResponse({ success: false, message: "Error loading draft: " + error.message });
+  }
+}
+
+/**
+ * Handles POST requests to the web app.
+ * Processes form submissions or draft saves based on 'actionType' in the payload.
+ * @param {GoogleAppsScript.Events.DoPost} e The event object.
+ * @returns {GoogleAppsScript.Content.TextOutput} A JSON response indicating success or failure.
+ */
+function doPost(e) {
+  Logger.log("doPost received request. Payload content length: " + e.postData.contents.length);
+  try {
+    const requestData = JSON.parse(e.postData.contents);
+    const actionType = requestData.actionType; // 'submit' or 'saveDraft'
+    const formData = requestData.formData;
+    const uploadedImages = requestData.uploadedImages || {}; // Object of arrays of { originalName, type, base64 }
+    const userId = requestData.userId;
+
+    if (!formData || !userId) {
+      throw new Error("Missing formData or userId in request.");
+    }
+
+    if (actionType === 'saveDraft') {
+      return handleSaveDraft(formData, uploadedImages, userId);
+    } else if (actionType === 'submit') {
+      return handleSubmitForm(formData, uploadedImages);
+    } else {
+      throw new Error("Invalid actionType specified.");
+    }
+
+  } catch (error) {
+    Logger.log("doPost Error: " + error.toString() + "\n" + error.stack);
+    return createJsonResponse({ success: false, message: "Error: " + error.message });
+  }
+}
+
+/**
+ * Handles saving the form data as a draft in a Google Sheet.
+ * This will overwrite any previous draft for the same user based on skatepark name.
+ * @param {Object} formData The form field data from the React frontend.
+ * @param {Object} uploadedImages Object containing base64 image data for file fields.
+ * @param {string} userId The ID of the current user.
+ * @returns {GoogleAppsScript.Content.TextOutput} JSON response with success/failure and resume link.
+ */
+function handleSaveDraft(formData, uploadedImages, userId) {
+  Logger.log("handleSaveDraft: Initiated for userId: " + userId + ", Skatepark Name: " + formData.skateparkName);
+  try {
+    const skateparkName = formData.skateparkName || 'Untitled Skatepark';
+    const auditDateForFilename = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd_HHmmss');
+    const draftFileName = `Skatepark_Audit_Draft_${userId}_${auditDateForFilename}`;
+
+    const draftFolder = DriveApp.getFolderById(DRAFT_FOLDER_ID);
+    let draftFile = null;
+
+    // Delete existing draft file if it exists, to ensure overwrite
+    const existingFiles = draftFolder.getFilesByName(draftFileName);
+    while (existingFiles.hasNext()) {
+      const file = existingFiles.next();
+      file.setTrashed(true);
+      Logger.log(`handleSaveDraft: Deleted existing draft file: ${file.getName()} (ID: ${file.getId()})`);
+    }
+
+    // Create a new spreadsheet for the draft
+    const newDraftSpreadsheet = SpreadsheetApp.create(draftFileName);
+    const newDraftFile = DriveApp.getFileById(newDraftSpreadsheet.getId());
+    newDraftFile.moveTo(draftFolder);
+    Logger.log(`handleSaveDraft: Created new draft spreadsheet: ${newDraftFile.getName()} (ID: ${newDraftFile.getId()})`);
+
+    const sheet = newDraftSpreadsheet.getSheets()[0];
+    sheet.setName('Draft Data');
+
+    const headers = [];
+    const rowData = [];
+    
+    // Populate headers and rowData based on PHASE1_DRAFT_FIELDS
+    PHASE1_DRAFT_FIELDS.forEach(fieldName => {
+        const fieldSpec = FORM_FIELDS_SPEC.find(f => f.fieldName === fieldName);
+        if (fieldSpec) {
+            headers.push(fieldSpec.fieldName);
+            let value = formData[fieldSpec.fieldName];
+            // Format dates for saving in sheet
+            if (fieldSpec.inputType === 'date') {
+                rowData.push(value ? Utilities.formatDate(new Date(value), Session.getScriptTimeZone(), 'yyyy-MM-dd') : '');
+            } else if (value === null || value === undefined) {
+                rowData.push(''); // Ensure null/undefined are saved as empty strings
+            } else {
+                rowData.push(value);
+            }
+        }
+    });
+
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange(2, 1, 1, rowData.length).setValues([rowData]);
+    Logger.log("handleSaveDraft: Data written to draft sheet.");
+
+    const resumeLink = `${FRONTEND_FORM_BASE_URL}?resumeDraftFileName=${encodeURIComponent(draftFileName)}`;
+    Logger.log("handleSaveDraft: Generated resume link: " + resumeLink);
+
+    const subject = `Skatepark Audit Form Draft Saved: ${skateparkName}`;
+    const body = `Your draft for the Skatepark Audit Form for "${skateparkName}" has been saved.\n\nYou can resume filling out the form by clicking on this link:\n${resumeLink}\n\nDraft File Name: ${draftFileName}\nDraft Sheet URL: ${newDraftSpreadsheet.getUrl()}`;
+    MailApp.sendEmail(EMAIL_RECIPIENTS, subject, body);
+    Logger.log("handleSaveDraft: Draft confirmation email sent.");
+
+    return createJsonResponse({ success: true, message: "Draft saved successfully and resume link sent to email!", resumeLink: resumeLink });
+
+  } catch (error) {
+    Logger.log("handleSaveDraft Error: " + error.toString() + "\n" + error.stack);
+    return createJsonResponse({ success: false, message: "Failed to save draft: " + error.message });
+  }
+}
+
+/**
+ * Handles the final submission of the form data.
+ * @param {Object} formData The form field data from the React frontend.
+ * @param {Object} uploadedImages Object containing base64 image data for file fields.
+ * @returns {GoogleAppsScript.Content.TextOutput} JSON response with success/failure.
+ */
+function handleSubmitForm(formData, uploadedImages) {
+  Logger.log("handleSubmitForm: Initiated for Skatepark Name: " + formData.skateparkName);
+  try {
+    const skateparkName = formData.skateparkName || 'Untitled Skatepark';
+    // Format date for submission folder naming to be `yyyyMMDD_HHmmss`
+    const auditDate = formData.dateOfAudit ? Utilities.formatDate(new Date(formData.dateOfAudit), Session.getScriptTimeZone(), 'yyyyMMdd_HHmmss') : Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd_HHmmss');
+    const folderName = `${skateparkName} Audit ${auditDate}`;
+    const rawDataFileName = `${skateparkName} Audit ${auditDate}`;
+
+    const baseFolder = DriveApp.getFolderById(BASE_FOLDER_ID);
+    const submissionFolder = baseFolder.createFolder(folderName);
+    Logger.log(`handleSubmitForm: Created submission folder: ${submissionFolder.getName()} (ID: ${submissionFolder.getId()})`);
+
+    // Create a copy of the raw data sheet template
+    const rawDataSpreadsheet = SpreadsheetApp.openById(RAW_DATA_SHEET_TEMPLATE_ID).copy(rawDataFileName);
+    const rawDataFile = DriveApp.getFileById(rawDataSpreadsheet.getId());
+    rawDataFile.moveTo(submissionFolder);
+    Logger.log(`handleSubmitForm: Created raw data spreadsheet: ${rawDataFile.getName()} (ID: ${rawDataFile.getId()})`);
+
+    const rawDataSheet = rawDataSpreadsheet.getSheets()[0];
+    rawDataSheet.setName('Raw Data'); // Ensure it's named "Raw Data"
+
+    // Set Skatepark Name Header in A1 (as per requirements)
+    rawDataSheet.getRange('A1').setValue(`Skatepark Name: ${skateparkName} Audit Data`);
+
+    // Map to store uploaded image URLs for easier lookup
+    const uploadedImageUrlMap = {}; // { fieldName: ["url1", "url2"], ... }
+
+    // Upload images to a subfolder within the submission folder
+    if (Object.keys(uploadedImages).length > 0) {
+      Logger.log(`handleSubmitForm: Processing ${Object.keys(uploadedImages).length} image fields.`);
+      for (const fieldName in uploadedImages) {
+        if (uploadedImages.hasOwnProperty(fieldName) && uploadedImages[fieldName].length > 0) {
+          uploadedImageUrlMap[fieldName] = [];
+          // Create a specific sub-folder for this image field's photos if it's a dedicated photo field
+          const photoSubFolderName = fieldName.replace(/([A-Z])/g, ' $1').trim() + ' Photos'; // "generalPhotos" -> "General Photos"
+          const photoFolder = submissionFolder.createFolder(photoSubFolderName);
+
+          for (const img of uploadedImages[fieldName]) {
+            try {
+              const fileBlob = Utilities.newBlob(Utilities.base64Decode(img.base64.split(',')[1]), img.type, img.originalName);
+              const uploadedFile = photoFolder.createFile(fileBlob);
+              uploadedImageUrlMap[fieldName].push(uploadedFile.getUrl());
+              Logger.log(`Uploaded submission image for ${fieldName}: ${uploadedFile.getName()} to folder ${photoFolder.getName()}`);
+            } catch (imgError) {
+              Logger.log(`Error uploading submission image for field ${fieldName}, file ${img.originalName}: ${imgError.message}`);
+              uploadedImageUrlMap[fieldName].push(`Error: ${imgError.message}`);
+            }
+          }
+        }
+      }
+    }
+
+
+    // Populate the sheet based on FORM_FIELDS_SPEC and formData
+    let currentRow = 3; // Start populating from row 3 (A1 header, A2 blank/metadata)
+    let currentGroup = ""; // To track group headings
+
+    FORM_FIELDS_SPEC.forEach(field => {
+      // Add group heading if it's a new group
+      if (field.group && field.group !== currentGroup) {
+        if (currentRow > 3) { // Add a blank row between groups if not the very first group after header
+          currentRow++;
+        }
+        rawDataSheet.getRange(currentRow, 1).setValue(field.group);
+        rawDataSheet.getRange(currentRow, 1).setFontWeight('bold');
+        currentGroup = field.group;
+        currentRow++;
+      }
+
+      // Populate Field Label (Column A)
+      rawDataSheet.getRange(currentRow, 1).setValue(field.label);
+
+      // Populate Field Value (Column B)
+      let value = formData[field.fieldName];
+      let displayValue = '';
+
+      if (field.isPhotoField) {
+        // Photo fields are handled in Column C (hyperlinks)
+        // Value in column B will be just the file names for non-hyperlink view
+        displayValue = (value && Array.isArray(value)) ? value.map(f => f.originalName).join(', ') : '';
+      } else if (Array.isArray(value)) {
+        displayValue = value.join(', '); // For checkboxes
+      } else if (typeof value === 'object' && value !== null && !(value instanceof Date)) {
+         displayValue = JSON.stringify(value); // Should not happen for simple fields if React formData is flat
+      } else if (field.inputType === 'date') {
+          // Format date for display in the sheet as `yyyy-MM-DD`
+          displayValue = value ? Utilities.formatDate(new Date(value), Session.getScriptTimeZone(), 'yyyy-MM-dd') : '';
+      }
+      else {
+        displayValue = value;
+      }
+      if (displayValue !== undefined && displayValue !== null && displayValue !== '') {
+          rawDataSheet.getRange(currentRow, 2).setValue(displayValue);
+      }
+
+      // Populate Image Hyperlinks (Column C) if it's a photo field
+      if (field.isPhotoField && uploadedImageUrlMap[field.fieldName] && uploadedImageUrlMap[field.fieldName].length > 0) {
+        const links = uploadedImageUrlMap[field.fieldName].map(url => `=HYPERLINK("${url}", "View Photo")`).join(', ');
+        rawDataSheet.getRange(currentRow, 3).setFormula(links);
+      }
+      currentRow++;
+    });
+
+    // Handle Individual Features (Dynamic Section) - Appended at the end
+    if (formData.individualFeatures && Array.isArray(formData.individualFeatures) && formData.individualFeatures.length > 0) {
+        currentRow++; // Add a blank row before this section
+        rawDataSheet.getRange(currentRow, 1).setValue('INDIVIDUAL FEATURES');
+        rawDataSheet.getRange(currentRow, 1).setFontWeight('bold');
+        currentRow++; // Move to next row for actual feature data
+
+        formData.individualFeatures.forEach((feature, index) => {
+            // Add a sub-heading for each feature
+            if (index > 0) { // Add a small gap between features
+                currentRow++;
+            }
+            rawDataSheet.getRange(currentRow, 1).setValue(`Feature ${index + 1} Details`);
+            rawDataSheet.getRange(currentRow, 1).setFontWeight('bold');
+            currentRow++;
+
+            // Feature Name
+            rawDataSheet.getRange(currentRow, 1).setValue("Feature Name:");
+            rawDataSheet.getRange(currentRow, 2).setValue(feature.featureName || '');
+            currentRow++;
+
+            // Feature Condition
+            rawDataSheet.getRange(currentRow, 1).setValue("Feature Condition:");
+            rawDataSheet.getRange(currentRow, 2).setValue(feature.featureCondition || '');
+            currentRow++;
+
+            // Feature Structural Observations
+            rawDataSheet.getRange(currentRow, 1).setValue("Structural Observations:");
+            rawDataSheet.getRange(currentRow, 2).setValue((feature.featureStructuralObservations || []).join(', '));
+            currentRow++;
+
+            // Feature Notes
+            rawDataSheet.getRange(currentRow, 1).setValue("Feature Notes:");
+            rawDataSheet.getRange(currentRow, 2).setValue(feature.featureNotes || '');
+            currentRow++;
+
+            // Feature Photos (using uploadedImageUrlMap)
+            rawDataSheet.getRange(currentRow, 1).setValue("Feature Photos:");
+            const featurePhotosFieldName = `individualFeatures[${index}].featurePhotos`; // Match key used in uploadedImages
+            if (uploadedImageUrlMap[featurePhotosFieldName] && uploadedImageUrlMap[featurePhotosFieldName].length > 0) {
+                const links = uploadedImageUrlMap[featurePhotosFieldName].map(url => `=HYPERLINK("${url}", "View Photo")`).join(', ');
+                rawDataSheet.getRange(currentRow, 3).setFormula(links);
+            }
+            currentRow++;
+        });
+    }
+
+
+    Logger.log("handleSubmitForm: Data populated in the new spreadsheet.");
+
+    // Send confirmation email
+    const subject = `Skatepark Audit Form Submission - ${skateparkName} - ${auditDate}`;
+    const emailBody = `
+      Dear RICH Landscapes Team,
+
+      A new Skatepark Audit Form has been submitted.
+
+      Skatepark Name: ${skateparkName}
+      Date of Audit: ${auditDate}
+      Submission Folder: ${submissionFolder.getUrl()}
+      Raw Data Sheet: ${rawDataSpreadsheet.getUrl()}
+
+      Thank you.
+    `;
+    MailApp.sendEmail(EMAIL_RECIPIENTS, subject, emailBody);
+    Logger.log("handleSubmitForm: Submission confirmation email sent.");
+
+    return createJsonResponse({ success: true, message: "Audit form submitted successfully!", spreadsheetUrl: rawDataSpreadsheet.getUrl(), folderUrl: submissionFolder.getUrl() });
+
+  } catch (error) {
+    Logger.log("handleSubmitForm Error: " + error.toString() + "\n" + error.stack);
+    return createJsonResponse({ success: false, message: "Submission failed: " + error.message });
+  }
+}
