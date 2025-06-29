@@ -5,6 +5,7 @@ const http = require('follow-redirects').http; // Use follow-redirects's http
 const https = require('follow-redirects').https; // Use follow-redirects's https
 const url = require('url');     // Required for parsing URLs
 const cors = require('cors');
+const bodyParser = require('body-parser'); 
 
 const app = express();
 
