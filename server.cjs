@@ -7,10 +7,9 @@ const url = require('url');     // Required for parsing URLs
 const cors = require('cors');
 
 const app = express();
+
     // ... (Your existing 'require' statements and other code above this point) ...
     // Make sure 'const cors = require('cors');' is present near the top.
-
-    const app = express();
 
     // CORS configuration to allow requests from your Firebase-hosted frontend
     // Replace 'https://your-firebase-hosting-url.web.app' with your ACTUAL Firebase Hosting URL
