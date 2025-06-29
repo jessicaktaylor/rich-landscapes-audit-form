@@ -15,7 +15,7 @@ const app = express();
     // CORS configuration to allow requests from your Firebase-hosted frontend
     // Replace 'https://your-firebase-hosting-url.web.app' with your ACTUAL Firebase Hosting URL
     const corsOptions = {
-        origin: 'https://skatepark-audit-form.web.app', // <--- THIS IS YOUR FIREBASE HOSTING URL
+    	origin: 'https://rich-landscapes-sp-audit.web.app', // <--- CORRECTED FIREBASE HOSTING URL
         methods: ['GET', 'POST', 'OPTIONS'], // Allow these HTTP methods
         allowedHeaders: ['Content-Type'], // Allow the Content-Type header
         credentials: true, // Allow sending cookies/auth headers (if applicable, though not used now)
