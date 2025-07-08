@@ -55,6 +55,15 @@
     // This `app.all('/api', ...)` middleware will handle all HTTP methods (GET, POST, OPTIONS, etc.)
     // that target a path starting with `/api`.
     app.all('/api', (req, expressRes) => { // `expressRes` is the response object for the client (browser)
+        // --- CRITICAL CORS PREFLIGHT HANDLING ---
+        // If it's an OPTIONS request (preflight), the 'cors' middleware has already handled the headers.
+        // We just need to send a 200 OK response and terminate the request here.
+        if (req.method === 'OPTIONS') {
+            console.log('[PROXY] Handling OPTIONS preflight request. Sending 200 OK.');
+            return expressRes.sendStatus(200); // Send 200 OK and terminate
+        }
+        // --- END CRITICAL CORS PREFLIGHT HANDLING ---
+
         console.log(`\n--- [PROXY] Forwarding ${req.method} request to Google Apps Script at ${new Date().toISOString()} ---`);
         
         // Parse the target Google Apps Script URL to get hostname, port, and path details
